@@ -18,6 +18,7 @@ import (
 var clientSet *kubernetes.Clientset
 
 func init() {
+    //build config file path
     var kubeconfig *string
     if home := homedir.HomeDir(); home != "" {
         fmt.Sprintf("Home dir: %s", home)
@@ -27,6 +28,8 @@ func init() {
         kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
     }
     flag.Parse()
+    
+    //create k8s config and clientset
     config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
     if err != nil {
         panic(err)

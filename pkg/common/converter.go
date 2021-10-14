@@ -5,6 +5,9 @@ import (
     "time"
 )
 
+// show legal timestamp
+// start       end
+//   |----------|
 func ConvertToTime(beginTime time.Time, endTime time.Time, timeIf interface{}) time.Time {
     if time,ok := timeIf.(time.Time); ok {
         if time.Before(beginTime) {

@@ -86,6 +86,8 @@ func (d KubeDeployment) WithSchedulerName(schedulerName string) KubeDeployment {
     return d
 }
 
+// withxxx functions set deployment args
+// you can create deployment content after it
 func (d KubeDeployment) Build() *appsv1.Deployment {
     if d.groupName == "" {
         d.groupName = DefaultGroupName
