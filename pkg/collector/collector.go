@@ -5,7 +5,7 @@ import (
     "github.com/TaoYang526/kubetest/pkg/cache"
     "github.com/TaoYang526/kubetest/pkg/common"
     "github.com/TaoYang526/kubetest/pkg/kubeclient"
-    "github.com/cloudera/yunikorn-core/pkg/common/configs"
+    "github.com/apache/incubator-yunikorn-core/pkg/common/configs"
     "gopkg.in/yaml.v2"
     apiv1 "k8s.io/api/core/v1"
     "k8s.io/apimachinery/pkg/api/resource"

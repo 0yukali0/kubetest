@@ -4,7 +4,7 @@ import (
     "fmt"
     "github.com/TaoYang526/kubetest/pkg/cache"
     "github.com/TaoYang526/kubetest/pkg/common"
-    "github.com/cloudera/yunikorn-core/pkg/common/configs"
+    "github.com/apache/incubator-yunikorn-core/pkg/common/configs"
     apiv1 "k8s.io/api/core/v1"
     "k8s.io/apimachinery/pkg/api/resource"
 )
