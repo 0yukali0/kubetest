@@ -4,7 +4,7 @@ import "gonum.org/v1/plot/vg"
 
 const (
     // constants for testing environment
-    QueueName        = "root.default"
+    QueueName        = "root.sandbox"
     Namespace        = "default"
     HollowNodePrefix = "hollow-"
 
