@@ -21,7 +21,7 @@ const (
 	DefaultQueueName          = common.QueueName
 	DefaultPodNum             = int32(10)
 	DefaultContainerName      = "web"
-	DefaultContainerImage     = "nginx:1.12"
+	DefaultContainerImage     = "nginx:1.14.2"
 	DefaultContainerPortName  = "http"
 	DefaultSchedulerName      = ""
 	DefaultResourceCPULimit   = "20m"
