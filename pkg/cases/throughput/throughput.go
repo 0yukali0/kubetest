@@ -10,6 +10,7 @@ import (
 	"github.com/TaoYang526/kubetest/pkg/kubeclient"
 	"github.com/TaoYang526/kubetest/pkg/monitor"
 	"github.com/TaoYang526/kubetest/pkg/painter"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -58,7 +59,7 @@ func main() {
 				},
 			}
 			Monitors[MonitorID-1] = createMonitor
-			createMonitor.Start()
+			Monitors[MonitorID-1].Start()
 		}
 		// wait all deployments running
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
@@ -67,21 +68,14 @@ func main() {
 		}
 		// calculate distribution of pod start times
 		endTime := time.Now()
-		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-
-		}
-		var podStartTimes []interface{}
+		var lists []*v1.ListOptions = make([]*v1.ListOptions, DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			target := fmt.Sprintf("%s%d", AppName, MonitorID)
 			targetMap := map[string]string{cache.KeyApp: target}
-			podStartTime := collector.CollectPodInfo(common.Namespace,
-				kubeclient.GetListOptions(targetMap), collector.ParsePodStartTime)
-			podStartTimes = append(podStartTimes, podStartTime)
+			lists[MonitorID-1] = kubeclient.GetListOptions(targetMap)
 		}
-		/*
-			podStartTimes := collector.CollectPodInfo(common.Namespace,
-				kubeclient.GetListOptions(SelectPodLabels), collector.ParsePodStartTime)
-		*/
+		podStartTimes := collector.CollectPodInfoWithID(MonitorID, common.Namespace,
+			lists, collector.ParsePodStartTime)
 		podStartTimeDistribution := collector.AnalyzeTimeDistribution(beginTime, endTime, podStartTimes)
 		fmt.Printf("Distribution of pod start times: %v, seconds: %d beginTime: %v, endTime: %v \n",
 			podStartTimeDistribution, len(podStartTimeDistribution), beginTime, endTime)
