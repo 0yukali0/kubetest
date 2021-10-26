@@ -31,7 +31,9 @@ var (
 
 func main() {
 	// make sure all related pods are cleaned up
-	monitor.WaitUtilAllMetricsAreCleanedUp(collectDeploymentMetrics)
+	for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+		monitor.WaitUtilAllMetricsAreCleanedUp(collectDeploymentMetrics)
+	}
 
 	dataMap := make(map[string][]int, 2)
 	for _, schedulerName := range common.SchedulerNames {
@@ -74,7 +76,7 @@ func main() {
 			targetMap := map[string]string{cache.KeyApp: target}
 			lists[MonitorID-1] = kubeclient.GetListOptions(targetMap)
 		}
-		podStartTimes := collector.CollectPodInfoWithID(MonitorID, common.Namespace,
+		podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.Namespace,
 			lists, collector.ParsePodStartTime)
 		podStartTimeDistribution := collector.AnalyzeTimeDistribution(beginTime, endTime, podStartTimes)
 		fmt.Printf("Distribution of pod start times: %v, seconds: %d beginTime: %v, endTime: %v \n",
@@ -89,7 +91,9 @@ func main() {
 			kubeclient.DeleteDeployment(common.Namespace, target)
 		}
 		// make sure all related pods are cleaned up
-		// monitor.WaitUtilAllMetricsAreCleanedUp(collectDeploymentMetrics)
+		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+			monitor.WaitUtilAllMetricsAreCleanedUp(collectDeploymentMetrics)
+		}
 	}
 
 	// draw chart
