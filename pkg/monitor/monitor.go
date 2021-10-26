@@ -22,6 +22,7 @@ type Monitor struct {
 	stopTime    time.Time
 	stopChan    chan bool
 	wg          sync.WaitGroup
+	Wg2         *sync.WaitGroup
 }
 
 func (m *Monitor) GetLastCheckPoint() *cache.Checkpoint {
@@ -79,6 +80,7 @@ func (m *Monitor) Start() {
 		}
 		fmt.Printf("Monitor[%s] exited\n", m.Name)
 		m.wg.Done()
+		m.Wg2.Done()
 	}(m)
 	fmt.Printf("Monitor[%s] started\n", m.Name)
 }
@@ -94,10 +96,11 @@ func (m *Monitor) WaitForStopped() {
 	m.wg.Wait()
 }
 
-func WaitUtilAllMetricsAreCleanedUp(collectMetrics func() []int) {
+func WaitUtilAllMetricsAreCleanedUp(wg2 *sync.WaitGroup, collectMetrics func() []int) {
 	initMonitor := &Monitor{
 		Name:           "clean-up-monitor",
 		Interval:       1,
+		Wg2:            wg2,
 		CollectMetrics: collectMetrics,
 		StopTrigger: func(m *Monitor) bool {
 			metricValues := m.GetLastCheckPoint()
