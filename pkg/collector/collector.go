@@ -40,7 +40,7 @@ func CollectPodInfoWithID(total int, namespace string, listOptions []*metav1.Lis
 	parsePodInfoFunc func(*apiv1.Pod) []interface{}) []interface{} {
 	var podInfos []interface{}
 	for i := 0; i < total; i++ {
-		pods, err := kubeclient.GetPods(namespace, listOptions[i-1])
+		pods, err := kubeclient.GetPods(namespace, listOptions[i])
 		if err != nil {
 			fmt.Printf("List pods failed: %v\n", err)
 		}
