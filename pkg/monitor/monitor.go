@@ -14,7 +14,7 @@ type Monitor struct {
 	NameSpace      string
 	Interval       int //in seconds
 	StopTrigger    func(m *Monitor) bool
-	CollectMetrics func() []int
+	CollectMetrics func(id int) []int
 	SkipSameMerics bool
 
 	checkpoints []*cache.Checkpoint
@@ -56,7 +56,7 @@ func (m *Monitor) Start() {
 				sleepTime := cpTime.Sub(time.Now())
 				if sleepTime > 0 {
 					time.Sleep(sleepTime)
-					metricValues := m.CollectMetrics()
+					metricValues := m.CollectMetrics(m.Num)
 					if metricValues != nil {
 						newCP := cache.Checkpoint{
 							Time:         cpTime,
@@ -95,10 +95,11 @@ func (m *Monitor) WaitForStopped() {
 	m.wg.Wait()
 }
 
-func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics func() []int, id int) {
+func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics func(id int) []int, id int) {
 	target := fmt.Sprintf(" %d", id)
 	initMonitor := &Monitor{
 		Name:           "clean-up-monitor" + target,
+		Num:            id,
 		Interval:       1,
 		CollectMetrics: collectMetrics,
 		StopTrigger: func(m *Monitor) bool {

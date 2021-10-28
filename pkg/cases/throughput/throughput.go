@@ -53,6 +53,7 @@ func main() {
 			// start monitor
 			createMonitor := &monitor.Monitor{
 				Name:           AppName + " create-monitor" + target,
+				Num:            MonitorID,
 				Interval:       1,
 				CollectMetrics: collectDeploymentMetrics,
 				SkipSameMerics: true,
@@ -70,10 +71,6 @@ func main() {
 			Monitors[MonitorID-1].Start()
 		}
 		// wait all deployments running
-		/*for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-			// wait util this deployment is running successfully
-			Monitors[MonitorID-1].WaitForStopped()
-		}*/
 		wg.Wait()
 		// calculate distribution of pod start times
 		endTime := time.Now()
@@ -119,8 +116,8 @@ func main() {
 	painter.DrawChart(chart)
 }
 
-func collectDeploymentMetrics() []int {
-	target := fmt.Sprintf("%s%d", AppName, MonitorID)
-	fmt.Printf("%d Assign %s\n", MonitorID, target)
+func collectDeploymentMetrics(id int) []int {
+	target := fmt.Sprintf("%s%d", AppName, id)
+	fmt.Printf("%d Assign %s\n", id, target)
 	return collector.CollectDeploymentMetrics(common.Namespace, target)
 }
