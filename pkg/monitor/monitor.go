@@ -95,9 +95,10 @@ func (m *Monitor) WaitForStopped() {
 	m.wg.Wait()
 }
 
-func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics func() []int) {
+func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics func() []int, id int) {
+	target := fmt.Sprintf(" %d", id)
 	initMonitor := &Monitor{
-		Name:           "clean-up-monitor",
+		Name:           "clean-up-monitor" + target,
 		Interval:       1,
 		CollectMetrics: collectMetrics,
 		StopTrigger: func(m *Monitor) bool {
@@ -113,7 +114,7 @@ func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics fun
 	initMonitor.SetWG(assigned)
 	initMonitor.Start()
 	// initMonitor.WaitForStopped()
-	fmt.Println("All related pods are cleaned up")
+	fmt.Printf("Moniter-%s related pods are cleaned up\n", target)
 }
 
 func (m *Monitor) SetWG(assigned *sync.WaitGroup) {

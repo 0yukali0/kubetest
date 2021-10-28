@@ -35,7 +35,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 	wg.Add(DeploymentNum)
 	for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-		monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics)
+		monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics, MonitorID)
 	}
 	wg.Done()
 
@@ -52,7 +52,7 @@ func main() {
 			kubeclient.CreateDeployment(common.Namespace, deployment)
 			// start monitor
 			createMonitor := &monitor.Monitor{
-				Name:           AppName + " create-monitor" + fmt.Sprintf("%d", MonitorID),
+				Name:           AppName + " create-monitor" + target,
 				Interval:       1,
 				CollectMetrics: collectDeploymentMetrics,
 				SkipSameMerics: true,
@@ -100,7 +100,7 @@ func main() {
 		// make sure all related pods are cleaned up
 		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-			monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics)
+			monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics, MonitorID)
 		}
 		wg.Wait()
 	}
@@ -121,5 +121,6 @@ func main() {
 
 func collectDeploymentMetrics() []int {
 	target := fmt.Sprintf("%s%d", AppName, MonitorID)
+	fmt.Printf("%d Assign %s\n", MonitorID, target)
 	return collector.CollectDeploymentMetrics(common.Namespace, target)
 }
