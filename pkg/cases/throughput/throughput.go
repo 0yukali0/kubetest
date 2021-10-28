@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	TotolPodNum     = 50000
+	TotolPodNum     = 1000
 	DeploymentNum   = 10
 	PodNum          = TotolPodNum / DeploymentNum
 	SelectPodLabels = map[string]string{cache.KeyApp: AppName}
@@ -32,19 +32,19 @@ var (
 
 func main() {
 	// make sure all related pods are cleaned up
-	wg2 := sync.WaitGroup{}
-	wg2.Add(DeploymentNum)
+	wg := &sync.WaitGroup{}
+	wg.Add(DeploymentNum)
 	for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-		monitor.WaitUtilAllMetricsAreCleanedUp(&wg2, collectDeploymentMetrics)
+		monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics)
 	}
-	wg2.Done()
+	wg.Done()
 
 	dataMap := make(map[string][]int, 2)
 	for _, schedulerName := range common.SchedulerNames {
 		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		// create deployment
 		beginTime := time.Now().Truncate(time.Second)
-		wg2.Add(DeploymentNum)
+		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			target := fmt.Sprintf("%s%d", AppName, MonitorID)
 			deployment := cache.KubeDeployment{}.WithSchedulerName(schedulerName).WithAppName(
@@ -53,8 +53,7 @@ func main() {
 			// start monitor
 			createMonitor := &monitor.Monitor{
 				Name:           AppName + " create-monitor" + fmt.Sprintf("%d", MonitorID),
-				Interval:       15,
-				Wg2:            &wg2,
+				Interval:       1,
 				CollectMetrics: collectDeploymentMetrics,
 				SkipSameMerics: true,
 				StopTrigger: func(m *monitor.Monitor) bool {
@@ -66,15 +65,16 @@ func main() {
 					return false
 				},
 			}
+			createMonitor.SetWG(wg)
 			Monitors[MonitorID-1] = createMonitor
 			Monitors[MonitorID-1].Start()
 		}
 		// wait all deployments running
-		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+		/*for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			// wait util this deployment is running successfully
 			Monitors[MonitorID-1].WaitForStopped()
-		}
-		wg2.Wait()
+		}*/
+		wg.Wait()
 		// calculate distribution of pod start times
 		endTime := time.Now()
 		var lists []*v1.ListOptions = make([]*v1.ListOptions, DeploymentNum)
@@ -98,11 +98,11 @@ func main() {
 			kubeclient.DeleteDeployment(common.Namespace, target)
 		}
 		// make sure all related pods are cleaned up
-		wg2.Add(DeploymentNum)
+		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-			monitor.WaitUtilAllMetricsAreCleanedUp(&wg2, collectDeploymentMetrics)
+			monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics)
 		}
-		wg2.Wait()
+		wg.Wait()
 	}
 
 	// draw chart

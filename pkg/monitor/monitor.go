@@ -21,8 +21,7 @@ type Monitor struct {
 	startTime   time.Time
 	stopTime    time.Time
 	stopChan    chan bool
-	wg          sync.WaitGroup
-	Wg2         *sync.WaitGroup
+	wg          *sync.WaitGroup
 }
 
 func (m *Monitor) GetLastCheckPoint() *cache.Checkpoint {
@@ -41,7 +40,7 @@ func (m *Monitor) Start() {
 		Seconds: 0,
 	}
 	m.checkpoints = append(m.checkpoints, firstCP)
-	m.wg.Add(1)
+	// m.wg.Add(1)
 	go func(m *Monitor) {
 		nextSeconds := 0
 		lastCp := m.checkpoints[0]
@@ -80,7 +79,7 @@ func (m *Monitor) Start() {
 		}
 		fmt.Printf("Monitor[%s] exited\n", m.Name)
 		m.wg.Done()
-		m.Wg2.Done()
+		// m.Wg2.Done()
 	}(m)
 	fmt.Printf("Monitor[%s] started\n", m.Name)
 }
@@ -96,11 +95,10 @@ func (m *Monitor) WaitForStopped() {
 	m.wg.Wait()
 }
 
-func WaitUtilAllMetricsAreCleanedUp(wg2 *sync.WaitGroup, collectMetrics func() []int) {
+func WaitUtilAllMetricsAreCleanedUp(assigned *sync.WaitGroup, collectMetrics func() []int) {
 	initMonitor := &Monitor{
 		Name:           "clean-up-monitor",
 		Interval:       1,
-		Wg2:            wg2,
 		CollectMetrics: collectMetrics,
 		StopTrigger: func(m *Monitor) bool {
 			metricValues := m.GetLastCheckPoint()
@@ -112,7 +110,12 @@ func WaitUtilAllMetricsAreCleanedUp(wg2 *sync.WaitGroup, collectMetrics func() [
 			return true
 		},
 	}
+	initMonitor.SetWG(assigned)
 	initMonitor.Start()
-	initMonitor.WaitForStopped()
+	// initMonitor.WaitForStopped()
 	fmt.Println("All related pods are cleaned up")
+}
+
+func (m *Monitor) SetWG(assigned *sync.WaitGroup) {
+	m.wg = assigned
 }
