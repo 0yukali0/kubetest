@@ -14,6 +14,7 @@ const (
 	YSConfigMapQueuesYamlKey        = "queues.yaml"
 	YSConfigMapQueuesResourceMemKey = "memory"
 	YSName                          = "yunikorn"
+	DeployReady                     = 1
 
 	// constants for chart
 	ChartWidth    = 6 * vg.Inch

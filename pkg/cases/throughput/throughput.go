@@ -43,7 +43,9 @@ func main() {
 	for _, schedulerName := range common.SchedulerNames {
 		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		// create deployment
-		beginTime := time.Now().Truncate(time.Second)
+		if schedulerName == common.SchedulerNames[0] {
+			plsScaleDownScheduler()
+		}
 		wg = &sync.WaitGroup{}
 		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
@@ -51,6 +53,34 @@ func main() {
 			deployment := cache.KubeDeployment{}.WithSchedulerName(schedulerName).WithAppName(
 				target).WithPodNum(int32(PodNum)).Build()
 			kubeclient.CreateDeployment(common.Namespace, deployment)
+			updateMonitor := &monitor.Monitor{
+				Name:           AppName + " create-monitor" + target,
+				Num:            MonitorID,
+				Interval:       1,
+				CollectMetrics: collectDeploymentMetrics,
+				SkipSameMerics: true,
+				StopTrigger: func(m *monitor.Monitor) bool {
+					lastCp := m.GetLastCheckPoint()
+					actualNum := lastCp.MetricValues[1]
+					fmt.Printf("Monitor %d update:%d\n", m.Num, actualNum)
+					if actualNum == PodNum {
+						// stop monitor when readyReplicas equals PodNum
+						return true
+					}
+					return false
+				},
+			}
+			updateMonitor.Start()
+		}
+		wg.Wait()
+		plsScaleUpScheduler()
+
+		//Start to check
+		beginTime := time.Now().Truncate(time.Second)
+		wg = &sync.WaitGroup{}
+		wg.Add(DeploymentNum)
+		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+			target := fmt.Sprintf("%s%d", AppName, MonitorID)
 			// start monitor
 			createMonitor := &monitor.Monitor{
 				Name:           AppName + " create-monitor" + target,
@@ -124,4 +154,25 @@ func collectDeploymentMetrics(id int) []int {
 	target := fmt.Sprintf("%s%d", AppName, id)
 	//fmt.Printf("%d Assign %s\n", id, target)
 	return collector.CollectDeploymentMetrics(common.Namespace, target)
+}
+
+func plsScaleDownScheduler() {
+	for YKStop := false; !YKStop; {
+		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YSName)
+		if result[1] != common.DeployReady {
+			YKStop = true
+		}
+		fmt.Println("Pls scale down YK scheduler")
+		time.Sleep(1000000000)
+	}
+}
+
+func plsScaleUpScheduler() {
+	for YKStop := false; !YKStop; {
+		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YSName)
+		if result[2] != common.DeployReady {
+			YKStop = true
+		}
+		fmt.Println("Pls scale up YK scheduler")
+	}
 }
