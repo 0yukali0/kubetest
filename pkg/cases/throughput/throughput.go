@@ -33,17 +33,18 @@ var (
 func main() {
 	// make sure all related pods are cleaned up
 	wg := &sync.WaitGroup{}
-	wg.Add(DeploymentNum)
+	/*wg.Add(DeploymentNum)
 	for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 		monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics, MonitorID)
 	}
-	wg.Done()
+	wg.Done()*/
 
 	dataMap := make(map[string][]int, 2)
 	for _, schedulerName := range common.SchedulerNames {
 		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		// create deployment
 		beginTime := time.Now().Truncate(time.Second)
+		wg = &sync.WaitGroup{}
 		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			target := fmt.Sprintf("%s%d", AppName, MonitorID)
@@ -95,6 +96,7 @@ func main() {
 			kubeclient.DeleteDeployment(common.Namespace, target)
 		}
 		// make sure all related pods are cleaned up
+		wg = &sync.WaitGroup{}
 		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics, MonitorID)
