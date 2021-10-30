@@ -61,7 +61,7 @@ func main() {
 				StopTrigger: func(m *monitor.Monitor) bool {
 					lastCp := m.GetLastCheckPoint()
 					actualNum := lastCp.MetricValues[2]
-					fmt.Printf("Montir %d actual ready:%d\n", m.Num, actualNum)
+					fmt.Printf("Montir %d ready:%d\n", m.Num, actualNum)
 					if actualNum == PodNum {
 						// stop monitor when readyReplicas equals PodNum
 						return true
@@ -122,6 +122,6 @@ func main() {
 
 func collectDeploymentMetrics(id int) []int {
 	target := fmt.Sprintf("%s%d", AppName, id)
-	fmt.Printf("%d Assign %s\n", id, target)
+	//fmt.Printf("%d Assign %s\n", id, target)
 	return collector.CollectDeploymentMetrics(common.Namespace, target)
 }
