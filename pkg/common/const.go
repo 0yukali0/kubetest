@@ -14,6 +14,7 @@ const (
 	YSConfigMapQueuesYamlKey        = "queues.yaml"
 	YSConfigMapQueuesResourceMemKey = "memory"
 	YSName                          = "yunikorn"
+	YKDeploymentName                = "yunikorn-scheduler"
 	DeployReady                     = 1
 
 	// constants for chart

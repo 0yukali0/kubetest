@@ -154,8 +154,8 @@ func collectDeploymentMetrics(id int) []int {
 
 func plsScaleDownScheduler() {
 	for YKStop := false; !YKStop; {
-		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YSName)
-		if result[1] != common.DeployReady {
+		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
+		if result[1] == 0 {
 			YKStop = true
 		}
 		fmt.Println("Pls scale down YK scheduler")
@@ -165,8 +165,8 @@ func plsScaleDownScheduler() {
 
 func plsScaleUpScheduler() {
 	for YKStop := false; !YKStop; {
-		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YSName)
-		if result[2] != common.DeployReady {
+		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
+		if result[2] == 1 {
 			YKStop = true
 		}
 		fmt.Println("Pls scale up YK scheduler")
