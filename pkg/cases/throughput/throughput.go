@@ -36,39 +36,43 @@ func main() {
 	dataMap := make(map[string][]int, 2)
 	for _, schedulerName := range common.SchedulerNames {
 		// scale down YK
+		isYK := false
 		if schedulerName == common.SchedulerNames[0] {
+			isYK = true
+		}
+		if isYK {
 			plsScaleDownScheduler()
-		}
-		// create deployment and pending
-		wg = &sync.WaitGroup{}
-		wg.Add(DeploymentNum)
-		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-			target := fmt.Sprintf("%s%d", AppName, MonitorID)
-			deployment := cache.KubeDeployment{}.WithSchedulerName(schedulerName).WithAppName(
-				target).WithPodNum(int32(PodNum)).Build()
-			kubeclient.CreateDeployment(common.Namespace, deployment)
-			updateMonitor := &monitor.Monitor{
-				Name:           AppName + " create-monitor" + target,
-				Num:            MonitorID,
-				Interval:       1,
-				CollectMetrics: collectDeploymentMetrics,
-				SkipSameMerics: true,
-				StopTrigger: func(m *monitor.Monitor) bool {
-					lastCp := m.GetLastCheckPoint()
-					actualNum := lastCp.MetricValues[1]
-					fmt.Printf("Monitor %d update:%d\n", m.Num, actualNum)
-					if actualNum == PodNum {
-						// stop monitor when updateReplicas equals PodNum
-						return true
-					}
-					return false
-				},
+			// create deployment and pending
+			wg = &sync.WaitGroup{}
+			wg.Add(DeploymentNum)
+			for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+				target := fmt.Sprintf("%s%d", AppName, MonitorID)
+				deployment := cache.KubeDeployment{}.WithSchedulerName(schedulerName).WithAppName(
+					target).WithPodNum(int32(PodNum)).Build()
+				kubeclient.CreateDeployment(common.Namespace, deployment)
+				updateMonitor := &monitor.Monitor{
+					Name:           AppName + " check-update-monitor" + target,
+					Num:            MonitorID,
+					Interval:       1,
+					CollectMetrics: collectDeploymentMetrics,
+					SkipSameMerics: true,
+					StopTrigger: func(m *monitor.Monitor) bool {
+						lastCp := m.GetLastCheckPoint()
+						actualNum := lastCp.MetricValues[1]
+						fmt.Printf("Monitor %d update:%d\n", m.Num, actualNum)
+						if actualNum == PodNum {
+							// stop monitor when updateReplicas equals PodNum
+							return true
+						}
+						return false
+					},
+				}
+				updateMonitor.Start()
 			}
-			updateMonitor.Start()
+			wg.Wait()
+			//Wait for scale up YK
+			plsScaleUpScheduler()
 		}
-		wg.Wait()
-		//Wait for scale up YK
-		plsScaleUpScheduler()
 
 		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		//Start to check
