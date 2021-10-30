@@ -60,7 +60,9 @@ func main() {
 				SkipSameMerics: true,
 				StopTrigger: func(m *monitor.Monitor) bool {
 					lastCp := m.GetLastCheckPoint()
-					if lastCp.MetricValues[2] == PodNum {
+					actualNum := lastCp.MetricValues[2]
+					fmt.Printf("Montir %d actual ready:%d\n", m.Num, actualNum)
+					if actualNum == PodNum {
 						// stop monitor when readyReplicas equals PodNum
 						return true
 					}

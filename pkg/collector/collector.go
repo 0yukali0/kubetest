@@ -2,7 +2,7 @@ package collector
 
 import (
 	"fmt"
-	"time"
+	//"time"
 
 	"github.com/TaoYang526/kubetest/pkg/cache"
 	"github.com/TaoYang526/kubetest/pkg/common"
@@ -82,10 +82,10 @@ func CollectPodMetrics(namespace string, listOptions *metav1.ListOptions) []int 
 		metrics = append(metrics, numCreated)
 		metrics = append(metrics, numScheduled)
 		metrics = append(metrics, numRunning)
-		curTime := time.Now()
+		/*curTime := time.Now()
 		fmt.Printf("%d:%d:%d created/scheduled/running pods: %d/%d/%d \n",
 			curTime.Hour(), curTime.Minute(), curTime.Second(),
-			numCreated, numScheduled, numRunning)
+			numCreated, numScheduled, numRunning)*/
 		return metrics
 	} else {
 		fmt.Println("Get nil pods")
@@ -101,10 +101,10 @@ func CollectDeploymentMetrics(namespace string, appName string) []int {
 		fmt.Println("Failed to get deployment: ", err.Error())
 		return []int{0, 0, 0}
 	}
-	curTime := time.Now()
+	/*curTime := time.Now()
 	fmt.Printf("%d:%d:%d desired/created/ready replicas: %d/%d/%d \n",
 		curTime.Hour(), curTime.Minute(), curTime.Second(),
-		*deployment.Spec.Replicas, deployment.Status.Replicas, deployment.Status.ReadyReplicas)
+		*deployment.Spec.Replicas, deployment.Status.Replicas, deployment.Status.ReadyReplicas)*/
 	return []int{int(*deployment.Spec.Replicas), int(deployment.Status.Replicas), int(deployment.Status.ReadyReplicas)}
 }
 
