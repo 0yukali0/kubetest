@@ -33,19 +33,13 @@ var (
 func main() {
 	// make sure all related pods are cleaned up
 	wg := &sync.WaitGroup{}
-	/*wg.Add(DeploymentNum)
-	for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-		monitor.WaitUtilAllMetricsAreCleanedUp(wg, collectDeploymentMetrics, MonitorID)
-	}
-	wg.Done()*/
-
 	dataMap := make(map[string][]int, 2)
 	for _, schedulerName := range common.SchedulerNames {
-		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
-		// create deployment
+		// scale down YK
 		if schedulerName == common.SchedulerNames[0] {
 			plsScaleDownScheduler()
 		}
+		// create deployment and pending
 		wg = &sync.WaitGroup{}
 		wg.Add(DeploymentNum)
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
@@ -64,7 +58,7 @@ func main() {
 					actualNum := lastCp.MetricValues[1]
 					fmt.Printf("Monitor %d update:%d\n", m.Num, actualNum)
 					if actualNum == PodNum {
-						// stop monitor when readyReplicas equals PodNum
+						// stop monitor when updateReplicas equals PodNum
 						return true
 					}
 					return false
@@ -73,8 +67,10 @@ func main() {
 			updateMonitor.Start()
 		}
 		wg.Wait()
+		//Wait for scale up YK
 		plsScaleUpScheduler()
 
+		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		//Start to check
 		beginTime := time.Now().Truncate(time.Second)
 		wg = &sync.WaitGroup{}
@@ -91,7 +87,7 @@ func main() {
 				StopTrigger: func(m *monitor.Monitor) bool {
 					lastCp := m.GetLastCheckPoint()
 					actualNum := lastCp.MetricValues[2]
-					fmt.Printf("Montir %d ready:%d\n", m.Num, actualNum)
+					fmt.Printf("Monitor %d ready:%d\n", m.Num, actualNum)
 					if actualNum == PodNum {
 						// stop monitor when readyReplicas equals PodNum
 						return true
