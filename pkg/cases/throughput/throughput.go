@@ -60,8 +60,8 @@ func main() {
 				}
 			*/
 			//Wait for scale up YK
-			plsScaleUpScheduler()
 			beginTime = time.Now().Truncate(time.Second)
+			plsScaleUpScheduler()
 		}
 
 		wg = &sync.WaitGroup{}
