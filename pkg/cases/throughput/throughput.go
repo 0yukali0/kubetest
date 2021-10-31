@@ -59,9 +59,9 @@ func main() {
 					checkDeploymentUpdate(target)
 				}
 			*/
-			beginTime = time.Now().Truncate(time.Second)
 			//Wait for scale up YK
 			plsScaleUpScheduler()
+			beginTime = time.Now().Truncate(time.Second)
 		}
 
 		wg = &sync.WaitGroup{}
