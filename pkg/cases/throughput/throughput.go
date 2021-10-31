@@ -146,6 +146,7 @@ func collectDeploymentMetrics(id int) []int {
 
 func plsScaleDownScheduler() {
 	for YKStop := false; !YKStop; {
+		setYKStartTime(nil)
 		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
 		if result[2] == 0 {
 			YKStop = true
@@ -156,23 +157,11 @@ func plsScaleDownScheduler() {
 }
 
 func plsScaleUpScheduler(beginTime *time.Time) {
-	var lists []*v1.ListOptions = make([]*v1.ListOptions, DeploymentNum)
 
 	for YKStop := false; !YKStop; {
 		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
 		if result[2] == 1 {
-			targetMap := map[string]string{cache.KeyApp: common.YKDeploymentName}
-			lists[0] = kubeclient.GetListOptions(targetMap)
-			podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.YSConfigMapNamespace,
-				lists, collector.ParsePodStartTime)
-			if columns, ok := podStartTimes[0].([]interface{}); ok {
-				if time, ok := columns[0].(time.Time); ok {
-					if time.Before(*beginTime) {
-						*beginTime = time
-						fmt.Printf("Time fix:%v\n", beginTime)
-					}
-				}
-			}
+			setYKStartTime(beginTime)
 			break
 		}
 		fmt.Println("Pls scale up YK scheduler")
@@ -190,4 +179,12 @@ func checkDeploymentUpdate(target string) {
 		fmt.Println("Waiting update")
 		time.Sleep(1000000000)
 	}
+}
+
+func setYKStartTime(beginTime *time.Time) time.Time {
+	targetMap := map[string]string{cache.KeyApp: common.YKDeploymentName}
+	podStartTimes := collector.CollectPodInfo(common.YSConfigMapNamespace,
+		kubeclient.GetListOptions(targetMap), collector.ParsePodStartTime)
+	fmt.Printf("%v", podStartTimes)
+	time.Sleep(3000000000)
 }
