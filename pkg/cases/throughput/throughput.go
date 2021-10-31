@@ -26,6 +26,7 @@ var (
 	DeploymentNum   = 10
 	PodNum          = TotolPodNum / DeploymentNum
 	SelectPodLabels = map[string]string{cache.KeyApp: AppName}
+	UpdateMonitors  = make([]*monitor.Monitor, DeploymentNum)
 	Monitors        = make([]*monitor.Monitor, DeploymentNum)
 	MonitorID       = 1
 )
@@ -40,6 +41,8 @@ func main() {
 		if schedulerName == common.SchedulerNames[0] {
 			isYK = true
 		}
+
+		// YK need apisever register deploymnet first.
 		if isYK {
 			plsScaleDownScheduler()
 			// create deployment and pending
@@ -67,13 +70,15 @@ func main() {
 						return false
 					},
 				}
-				updateMonitor.Start()
+				UpdateMonitors[MonitorID-1] = updateMonitor
+				UpdateMonitors[MonitorID-1].Start()
 			}
 			wg.Wait()
 			//Wait for scale up YK
 			plsScaleUpScheduler()
 		}
 
+		// Start to monitor
 		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
 		//Start to check
 		beginTime := time.Now().Truncate(time.Second)
