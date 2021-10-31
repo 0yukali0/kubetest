@@ -61,7 +61,7 @@ func main() {
 			*/
 			//Wait for scale up YK
 			beginTime = time.Now().Truncate(time.Second)
-			plsScaleUpScheduler()
+			plsScaleUpScheduler(&beginTime)
 		}
 
 		wg = &sync.WaitGroup{}
@@ -155,13 +155,29 @@ func plsScaleDownScheduler() {
 	}
 }
 
-func plsScaleUpScheduler() {
+func plsScaleUpScheduler(beginTime *time.Time) {
+	var lists []*v1.ListOptions = make([]*v1.ListOptions, DeploymentNum)
+
 	for YKStop := false; !YKStop; {
 		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
 		if result[2] == 1 {
-			YKStop = true
+			targetMap := map[string]string{cache.KeyApp: common.YKDeploymentName}
+			lists[0] = kubeclient.GetListOptions(targetMap)
+			podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.Namespace,
+				lists, collector.ParsePodStartTime)
+			if columns, ok := podStartTimes[0].([]interface{}); ok {
+				if time, ok := columns[0].(time.Time); ok {
+					if time.Before(*beginTime) {
+						*beginTime = time
+						fmt.Printf("Time fix:%v\n", beginTime)
+					}
+				}
+			}
+			break
 		}
 		fmt.Println("Pls scale up YK scheduler")
+		*beginTime = time.Now().Truncate(time.Second)
+		fmt.Printf("Time update:%v\n", beginTime)
 	}
 }
 
