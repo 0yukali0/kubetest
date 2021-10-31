@@ -185,6 +185,11 @@ func setYKStartTime(beginTime *time.Time) {
 	targetMap := map[string]string{cache.KeyApp: common.YSName}
 	podStartTimes := collector.CollectPodInfo(common.YSConfigMapNamespace,
 		kubeclient.GetListOptions(targetMap), collector.ParsePodStartTime)
+	if columns, ok := podStartTimes[0].([]interface{}); ok {
+		if time, ok := columns[0].(time.Time); ok {
+			fmt.Printf("time is %v\n", time)
+		}
+	}
 	fmt.Printf("%v", podStartTimes)
 	time.Sleep(3000000000)
 }
