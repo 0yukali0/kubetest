@@ -46,34 +46,16 @@ func main() {
 		if isYK {
 			plsScaleDownScheduler()
 			// create deployment and pending
-			wg = &sync.WaitGroup{}
-			wg.Add(DeploymentNum)
 			for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 				target := fmt.Sprintf("%s%d", AppName, MonitorID)
 				deployment := cache.KubeDeployment{}.WithSchedulerName(schedulerName).WithAppName(
 					target).WithPodNum(int32(PodNum)).Build()
 				kubeclient.CreateDeployment(common.Namespace, deployment)
-				updateMonitor := &monitor.Monitor{
-					Name:           AppName + " check-update-monitor" + target,
-					Num:            MonitorID,
-					Interval:       1,
-					CollectMetrics: collectDeploymentMetrics,
-					SkipSameMerics: true,
-					StopTrigger: func(m *monitor.Monitor) bool {
-						lastCp := m.GetLastCheckPoint()
-						actualNum := lastCp.MetricValues[1]
-						fmt.Printf("Monitor %d update:%d\n", m.Num, actualNum)
-						if actualNum == PodNum {
-							// stop monitor when updateReplicas equals PodNum
-							return true
-						}
-						return false
-					},
-				}
-				UpdateMonitors[MonitorID-1] = updateMonitor
-				UpdateMonitors[MonitorID-1].Start()
 			}
-			wg.Wait()
+			for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+				target := fmt.Sprintf("%s%d", AppName, MonitorID)
+				checkDeploymentUpdate(target)
+			}
 			//Wait for scale up YK
 			plsScaleUpScheduler()
 		}
@@ -164,7 +146,7 @@ func collectDeploymentMetrics(id int) []int {
 func plsScaleDownScheduler() {
 	for YKStop := false; !YKStop; {
 		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
-		if result[1] == 0 {
+		if result[2] == 0 {
 			YKStop = true
 		}
 		fmt.Println("Pls scale down YK scheduler")
@@ -179,5 +161,16 @@ func plsScaleUpScheduler() {
 			YKStop = true
 		}
 		fmt.Println("Pls scale up YK scheduler")
+	}
+}
+
+func checkDeploymentUpdate(target string) {
+	for updateOk := false; !updateOk; {
+		result := collector.CollectDeploymentMetrics(common.YSConfigMapNamespace, common.YKDeploymentName)
+		if result[1] == PodNum {
+			break
+		}
+		fmt.Println("Waiting update")
+		time.Sleep(1000000000)
 	}
 }
