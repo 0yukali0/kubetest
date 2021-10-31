@@ -41,7 +41,8 @@ func main() {
 		if schedulerName == common.SchedulerNames[0] {
 			isYK = true
 		}
-
+		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
+		beginTime := time.Now().Truncate(time.Second)
 		// YK need apisever register deploymnet first.
 		if isYK {
 			plsScaleDownScheduler()
@@ -52,20 +53,20 @@ func main() {
 					target).WithPodNum(int32(PodNum)).Build()
 				kubeclient.CreateDeployment(common.Namespace, deployment)
 			}
-			for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-				target := fmt.Sprintf("%s%d", AppName, MonitorID)
-				checkDeploymentUpdate(target)
-			}
+			/*
+				for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
+					target := fmt.Sprintf("%s%d", AppName, MonitorID)
+					checkDeploymentUpdate(target)
+				}
+			*/
+			beginTime = time.Now().Truncate(time.Second)
 			//Wait for scale up YK
 			plsScaleUpScheduler()
 		}
 
-		// Start to monitor
-		fmt.Printf("Starting %s via scheduler %s\n", AppName, schedulerName)
-		//Start to check
-		beginTime := time.Now().Truncate(time.Second)
 		wg = &sync.WaitGroup{}
 		wg.Add(DeploymentNum)
+		// Start to monitor
 		for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
 			target := fmt.Sprintf("%s%d", AppName, MonitorID)
 			// start monitor
