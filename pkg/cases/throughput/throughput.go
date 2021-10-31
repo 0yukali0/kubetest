@@ -163,7 +163,7 @@ func plsScaleUpScheduler(beginTime *time.Time) {
 		if result[2] == 1 {
 			targetMap := map[string]string{cache.KeyApp: common.YKDeploymentName}
 			lists[0] = kubeclient.GetListOptions(targetMap)
-			podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.Namespace,
+			podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.YSConfigMapNamespace,
 				lists, collector.ParsePodStartTime)
 			if columns, ok := podStartTimes[0].([]interface{}); ok {
 				if time, ok := columns[0].(time.Time); ok {
