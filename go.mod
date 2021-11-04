@@ -13,4 +13,4 @@ require (
 	k8s.io/client-go v0.16.13
 )
 
-replace github.com/TaoYang526/kubetest => /home/yuteng/work/kubetest
+replace github.com/TaoYang526/kubetest => /home/yuteng/kubetest

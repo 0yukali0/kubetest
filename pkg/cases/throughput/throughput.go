@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"sync"
 	"time"
 
@@ -31,6 +33,12 @@ var (
 	MonitorID       = 1
 )
 
+type Timestamps struct {
+	StartTime      time.Time `json: start`
+	InnerStartTime time.Time `json: innerStart`
+	Distribution   []int     `json: distribution`
+}
+
 func main() {
 	// make sure all related pods are cleaned up
 	wg := &sync.WaitGroup{}
@@ -53,12 +61,6 @@ func main() {
 					target).WithPodNum(int32(PodNum)).Build()
 				kubeclient.CreateDeployment(common.Namespace, deployment)
 			}
-			/*
-				for MonitorID = 1; MonitorID <= DeploymentNum; MonitorID++ {
-					target := fmt.Sprintf("%s%d", AppName, MonitorID)
-					checkDeploymentUpdate(target)
-				}
-			*/
 			//Wait for scale up YK
 			beginTime = time.Now().Truncate(time.Second)
 			plsScaleUpScheduler(&beginTime)
@@ -104,6 +106,8 @@ func main() {
 		podStartTimes := collector.CollectPodInfoWithID(DeploymentNum, common.Namespace,
 			lists, collector.ParsePodStartTime)
 		podStartTimeDistribution := collector.AnalyzeTimeDistribution(beginTime, endTime, podStartTimes)
+		// log distribution
+		WriteDistributionFile(schedulerName, beginTime, beginTime, podStartTimeDistribution)
 		fmt.Printf("Distribution of pod start times: %v, seconds: %d beginTime: %v, endTime: %v \n",
 			podStartTimeDistribution, len(podStartTimeDistribution), beginTime, endTime)
 
@@ -192,4 +196,12 @@ func setYKStartTime(beginTime *time.Time) {
 	}
 	fmt.Printf("%v", podStartTimes)
 	time.Sleep(3000000000)
+}
+
+func WriteDistributionFile(schedulerName string, ReadyTime time.Time,
+	beginTime time.Time, distribution []int) {
+	data := Timestamps{}
+	file, _ := json.MarshalIndent(data, "", " ")
+	path := fmt.Sprintf("/tmp/%s.log", schedulerName)
+	_ = ioutil.WriteFile(path, file, 0644)
 }
