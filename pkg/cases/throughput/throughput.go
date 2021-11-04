@@ -202,6 +202,6 @@ func WriteDistributionFile(schedulerName string, ReadyTime time.Time,
 	beginTime time.Time, distribution []int) {
 	data := Timestamps{}
 	file, _ := json.MarshalIndent(data, "", " ")
-	path := fmt.Sprintf("/tmp/%s.log", schedulerName)
+	path := fmt.Sprintf("/tmp/log_%s.json", schedulerName)
 	_ = ioutil.WriteFile(path, file, 0644)
 }
